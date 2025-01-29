@@ -1,4 +1,5 @@
-﻿using iText.Forms.Fields;
+﻿using iText.Forms;
+using iText.Forms.Fields;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
@@ -104,6 +105,76 @@ namespace iText9.Net_Playground.Signature
                 using var pdfDocument = new PdfDocument(writer);
             }
             return outputMemoryStream.ToArray();
+        }
+
+        /// <summary>
+        /// Error while signing multiple signature fields using itext c#
+        /// https://stackoverflow.com/questions/79396411/error-while-signing-multiple-signature-fields-using-itext-c-sharp
+        /// 
+        /// Indeed, using the OP's code Acrobat has issues when applying multiple signatures in one go.
+        /// But see <see cref="CreateLikeDharmendraSinsinwarImproved"/>
+        /// </summary>
+        [Test]
+        public void CreateLikeDharmendraSinsinwar()
+        {
+            string DEST = @"..\..\..\target\test-outputs\signature\FileWith3SignatureFields.pdf";
+            PdfWriter writer = new PdfWriter(DEST);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            Document document = new Document(pdfDoc);
+
+            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+
+            AddSignatureFieldDharmendraSinsinwar(form, "signature1", 36, 700, 200, 50);
+            AddSignatureFieldDharmendraSinsinwar(form, "signature2", 36, 600, 200, 50);
+            AddSignatureFieldDharmendraSinsinwar(form, "signature3", 36, 500, 200, 50);
+
+            document.Close();
+        }
+
+        /// <see cref="CreateLikeDharmendraSinsinwar"/>
+        public static void AddSignatureFieldDharmendraSinsinwar(PdfAcroForm form, string fieldName, float x, float y, float width, float height)
+        {
+            Rectangle rect = new Rectangle(x, y, width, height);
+            PdfWidgetAnnotation pdfWidgetAnnotation = new PdfWidgetAnnotation(rect);
+            PdfSignatureFormField signatureField = PdfFormCreator.CreateSignatureFormField(pdfWidgetAnnotation, form.GetPdfDocument());
+            signatureField.SetFieldName(fieldName);
+            form.AddField(signatureField);
+        }
+
+        /// <summary>
+        /// Error while signing multiple signature fields using itext c#
+        /// https://stackoverflow.com/questions/79396411/error-while-signing-multiple-signature-fields-using-itext-c-sharp
+        /// 
+        /// As it turned out, Acrobat requires the widget Type entry. So to make <see cref="CreateLikeDharmendraSinsinwar"/>
+        /// create PDFs Acrobat can handle well, it suffices to change <see cref="AddSignatureFieldDharmendraSinsinwar(PdfAcroForm, string, float, float, float, float)"/>
+        /// like here in <see cref="AddSignatureFieldDharmendraSinsinwarImproved(PdfAcroForm, string, float, float, float, float)"/>.
+        /// </summary>
+        [Test]
+        public void CreateLikeDharmendraSinsinwarImproved()
+        {
+            string DEST = @"..\..\..\target\test-outputs\signature\FileWith3SignatureFieldsImproved.pdf";
+            PdfWriter writer = new PdfWriter(DEST);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            Document document = new Document(pdfDoc);
+
+            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+
+            AddSignatureFieldDharmendraSinsinwarImproved(form, "signature1", 36, 700, 200, 50);
+            AddSignatureFieldDharmendraSinsinwarImproved(form, "signature2", 36, 600, 200, 50);
+            AddSignatureFieldDharmendraSinsinwarImproved(form, "signature3", 36, 500, 200, 50);
+
+            document.Close();
+        }
+
+        /// <see cref="CreateLikeDharmendraSinsinwarImproved"/>
+        public static void AddSignatureFieldDharmendraSinsinwarImproved(PdfAcroForm form, string fieldName, float x, float y, float width, float height)
+        {
+            Rectangle rect = new Rectangle(x, y, width, height);
+            PdfWidgetAnnotation pdfWidgetAnnotation = new PdfWidgetAnnotation(rect);
+            pdfWidgetAnnotation.Put(PdfName.Type, PdfName.Annot);
+            PdfSignatureFormField signatureField = PdfFormCreator.CreateSignatureFormField(pdfWidgetAnnotation, form.GetPdfDocument());
+            signatureField.SetFieldName(fieldName);
+            form.AddField(signatureField);
         }
     }
 }
